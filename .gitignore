@@ -1,4 +1,4 @@
 .DS_Store
 __pycache__/
 *.pyc
-
+/pivot-prototype/assets/heroes-spritesheet-key.png

@@ -147,3 +147,74 @@ When the user provides a sketch, preserve the spatial relationship in the sketch
 
 Do not reinterpret a sketch into a different mechanic just because it seems more practical.
 
+## Mistake 6: Assuming The Combined Ultimate Should Be Sequential
+
+### What I Did Wrong
+
+I proposed that the guardian, mage, and archer effects should activate one after another so each role would be readable.
+
+### Why It Was Wrong
+
+The user wants the combined ultimate to feel like overwhelming simultaneous cooperation.
+
+As the player drags across the enemy field, all hero effects should immediately affect the same drawn locations together. The magical core also participates with an additional special effect such as lightning.
+
+### Correct Rule
+
+The combined ultimate should apply these effects together along the live drag path:
+
+- Guardian terrain or crowd control
+- Mage area damage
+- Archer concentrated rapid fire
+- Core special attack
+
+Readability should be solved through visual layering, color, height, sound, and very small frame offsets, not by changing the mechanic into a sequential attack.
+
+### Do Not Repeat
+
+Do not replace the user's desired simultaneous impact with a sequential presentation unless the user explicitly changes this direction.
+
+## Mistake 7: Inventing Center-Hero Target Priority
+
+### What I Did Wrong
+
+I suggested that the center hero should receive more concentrated enemy attacks to give formation order additional meaning.
+
+### Why It Was Wrong
+
+There was no established reason for enemies to prioritize the center hero. It also contradicted the simplified pivot rule where heroes are attack and skill units while enemies advance toward the core.
+
+### Correct Rule
+
+Do not force enemies to target the center hero merely because of slot position. If heroes are valid targets, ordinary enemies can target the nearest living hero, which makes center and side pressure emerge naturally from enemy approach positions.
+
+### Do Not Repeat
+
+Do not invent combat rules merely to give another system strategic meaning. Add a rule only when it supports the established core loop and has a clear player-facing reason.
+
+## Mistake 8: Treating A Question As A Rejection
+
+### What I Did Wrong
+
+When the user asked why enemies would focus the center hero, I assumed the user wanted enemies not to attack heroes at all. I immediately removed hero targeting and hero HP from the draft.
+
+### Why It Was Wrong
+
+The user was asking for the design rationale, not rejecting hero targeting. The response collapsed two separate questions:
+
+- Should enemies attack heroes?
+- Should enemies receive a forced priority toward the center hero?
+
+The user is open to enemies attacking heroes, while the forced center priority still needs no artificial rule.
+
+### Correct Rule
+
+- Answer the reason behind a proposed rule before treating the question as a request to change it.
+- Enemies may attack heroes.
+- Default enemies should target the nearest living hero rather than receiving an unexplained center-slot priority.
+- If a hero falls, the surviving heroes reposition and continue defending the core.
+- Default enemies advance directly to the core only when no heroes remain alive.
+
+### Do Not Repeat
+
+Do not convert a clarification question into a design decision without checking what part of the proposal the user is actually questioning.

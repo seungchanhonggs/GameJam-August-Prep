@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#101722">
+  <title>Coreline - Pivot Prototype</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="viewport">
+    <section class="game" aria-label="Coreline pivot prototype">
+      <canvas id="gameCanvas" width="720" height="1560"></canvas>
+
+      <header class="hud">
+        <div class="stage-line">
+          <span id="stageLabel">STAGE 01</span>
+          <span id="timerLabel">02:40</span>
+        </div>
+        <div class="progress"><div id="stageProgress"></div></div>
+        <div class="core-line">
+          <span id="levelLabel">CORE LV.1</span>
+          <div class="exp-track"><div id="expFill"></div></div>
+        </div>
+      </header>
+
+      <div class="top-actions">
+        <button id="startButton" type="button">전투 시작</button>
+        <button id="pauseButton" type="button" aria-label="일시정지" title="일시정지">Ⅱ</button>
+        <button id="restartButton" type="button" aria-label="재시작" title="재시작">↻</button>
+      </div>
+
+      <div class="danger-banner hidden" id="dangerBanner">LAST DEFENDER</div>
+
+      <div class="elixir-tray" aria-label="마법 엘릭서">
+        <div class="tray-label">ELIXIR</div>
+        <button class="elixir-slot" id="elixirSlot0" type="button" aria-label="엘릭서 슬롯 1"></button>
+        <button class="elixir-slot" id="elixirSlot1" type="button" aria-label="엘릭서 슬롯 2"></button>
+      </div>
+
+      <section class="controls" aria-label="전투 스킬">
+        <div class="skill-row">
+          <button class="skill-card archer" data-hero="archer" type="button">
+            <span class="skill-key">A</span>
+            <span class="skill-copy"><b>다중 화살</b><small>적진에 드래그</small></span>
+            <span class="skill-charge"><i id="archerCharge"></i></span>
+            <span class="skill-state" id="archerState">0%</span>
+          </button>
+          <button class="skill-card mage" data-hero="mage" type="button">
+            <span class="skill-key">M</span>
+            <span class="skill-copy"><b>대폭발</b><small>적진에 드래그</small></span>
+            <span class="skill-charge"><i id="mageCharge"></i></span>
+            <span class="skill-state" id="mageState">0%</span>
+          </button>
+          <button class="skill-card guardian" data-hero="guardian" type="button">
+            <span class="skill-key">G</span>
+            <span class="skill-copy"><b>방어벽</b><small>적진에 드래그</small></span>
+            <span class="skill-charge"><i id="guardianCharge"></i></span>
+            <span class="skill-state" id="guardianState">0%</span>
+          </button>
+        </div>
+
+        <div class="super-row">
+          <div class="revive-info"><span>REVIVE</span><b id="reviveCount">◆◆</b></div>
+          <button id="superButton" class="super-button" type="button">
+            <span class="super-ring"><i id="superFill"></i></span>
+            <span class="super-copy"><b>CORE LINK</b><small id="superState">30부터 길게 누르기</small></span>
+          </button>
+        </div>
+      </section>
+
+      <div class="pause-overlay hidden" id="pauseOverlay">
+        <span>PAUSED</span>
+      </div>
+
+      <div class="upgrade-overlay hidden" id="upgradeOverlay">
+        <div class="upgrade-panel">
+          <p>CORE LEVEL UP</p>
+          <h2 id="upgradeTitle">업그레이드 선택</h2>
+          <div class="upgrade-cards" id="upgradeCards"></div>
+        </div>
+      </div>
+
+      <div class="start-overlay" id="startOverlay">
+        <div class="start-panel">
+          <p>전방 자동 전투</p>
+          <h1>CORELINE</h1>
+          <span>개별 스킬을 아껴 코어를 충전하고<br>코어 링크를 길게 눌러 적을 공격하세요.</span>
+          <button id="overlayStartButton" type="button">전투 시작</button>
+        </div>
+      </div>
+
+      <div class="result hidden" id="resultOverlay">
+        <div class="result-panel">
+          <p id="resultEyebrow">STAGE COMPLETE</p>
+          <h2 id="resultTitle">VICTORY</h2>
+          <span id="resultCopy"></span>
+          <button id="resultRestartButton" type="button">다시 플레이</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
