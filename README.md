@@ -40,6 +40,23 @@ Core idea:
 - Dead heroes leave combat and the survivors reposition.
 - Use one of two prototype Revival Stones by tapping a dead hero card.
 
+### Free-Rotation v2 Prototype
+
+Path:
+
+```text
+/rotation-v2-prototype/
+```
+
+Core idea:
+
+- Rotate all three heroes continuously by dragging around the arena like a wheel.
+- Each hero has a unique attack angle and range instead of owning a full 120-degree sector.
+- Individual ultimates trigger automatically when charged and a valid enemy is inside the hero's coverage.
+- Enemies move toward the core and collide with heroes or walls that physically block their route.
+- Ambient enemies continuously enter from random angles around the full 360-degree perimeter; major waves choose a new concentrated direction each time.
+- Core Link turns rotation into a six-second combo sweep: connect different hero ranges on the same enemy to trigger core lightning.
+
 ## Play Locally
 
 Run the local server:

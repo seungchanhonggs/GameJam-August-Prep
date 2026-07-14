@@ -396,3 +396,35 @@ The first pivot prototype used path drawing for the combined ultimate. After tes
 - Core EXP level-ups now pause combat and present three random upgrade cards.
 - The initial pool contains 12 stackable cards across archer, mage, guardian, and core groups.
 - The previous temporary automatic HP growth on level-up was removed.
+
+## 2026-07-14: Return to 360-Degree Rotation
+
+Team feedback found the single-row forward-defense version less enjoyable than the original rotation concept. The forward-defense prototype remains available for comparison, but the active exploration returned to 360-degree defense.
+
+The new `rotation-v2-prototype/` changes the original rotation rules:
+
+- Discrete left/right taps and 120-degree slot swaps were removed.
+- Players rotate the formation continuously with a circular finger drag.
+- Heroes no longer own complete 120-degree sectors.
+- Archer starts with a narrow long range, mage with a medium wide range, and guardian with a short broad range.
+- Target selection now checks each hero's current direction, personal angle, and range.
+- Enemies advance toward the core and interact with heroes or walls that physically intercept them.
+- All individual hero ultimates now trigger automatically when charged and a valid target is available.
+- The recommended new Core Link is `Resonance Rotation`, where sweeping enemies with different hero ranges builds a multi-hero combo and a core-lightning finisher.
+
+`Resonance Rotation` was then implemented for testing:
+
+- Each hero has a separate colored Core Link charge segment.
+- Successful automatic ultimates charge the archer and mage segments; a wall's first enemy block charges the guardian segment.
+- Tapping the ready core begins a six-second link mode.
+- During link mode, each enemy can receive each living hero's sweep effect once.
+- Connecting every living hero effect on the same enemy triggers a core-lightning finisher.
+- If a hero dies during link mode, the required combo immediately contracts to the surviving roles and the finisher scales down.
+
+Enemy spawning was then changed from the legacy three fixed lanes to full 360-degree entry:
+
+- Ambient enemies choose a new random perimeter angle for every spawn.
+- Group enemies share an entry angle and spread along that point's tangent so they remain visually grouped from any direction.
+- Major waves choose a fresh concentrated angle each time.
+- The boss enters from a random angle each run.
+- Enemy movement and targeting no longer depend on lane identifiers.
