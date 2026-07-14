@@ -31,6 +31,8 @@ const ui = {
   wallLevel: document.getElementById("wallLevel"),
   startButton: document.getElementById("startButton"),
   pauseButton: document.getElementById("pauseButton"),
+  rotateLeftButton: document.getElementById("rotateLeftButton"),
+  rotateRightButton: document.getElementById("rotateRightButton"),
   quickRestartButton: document.getElementById("quickRestartButton"),
   debugToggle: document.getElementById("debugToggle"),
   debugPanel: document.getElementById("debugPanel"),
@@ -73,6 +75,8 @@ const balance = {
   groupSpacing: 22,
   heroDamageShare: 0.6,
   rotationSensitivity: 0.65,
+  rotationFreeMode: true,
+  rotationSwitchMode: false,
   coreLink: {
     skillCharge: 34,
     wallBlockCharge: 34,
@@ -355,6 +359,7 @@ function beginRotation(event) {
 function moveRotation(event) {
   if (!rotationDrag || event.pointerId !== rotationDrag.pointerId) return;
   event.preventDefault();
+  if (isSwitchRotationMode()) return;
   const current = pointerAngle(canvasPoint(event));
   state.rotationAngle += angleDelta(current, rotationDrag.lastAngle) * balance.rotationSensitivity;
   rotationDrag.lastAngle = current;
@@ -376,6 +381,8 @@ document.addEventListener("contextmenu", event => {
 });
 ui.startButton.addEventListener("click", startCombat);
 ui.pauseButton.addEventListener("click", togglePause);
+ui.rotateLeftButton.addEventListener("click", () => rotateBySwitch(-1));
+ui.rotateRightButton.addEventListener("click", () => rotateBySwitch(1));
 ui.quickRestartButton.addEventListener("click", () => {
   resetGame();
   startCombat();
@@ -420,6 +427,24 @@ function togglePause() {
   state.rotationActive = false;
   ui.pauseButton.textContent = state.paused ? "계속하기" : "일시정지";
   ui.pauseButton.dataset.paused = String(state.paused);
+}
+
+function isSwitchRotationMode() {
+  return balance.rotationSwitchMode && !balance.rotationFreeMode;
+}
+
+function activeArcDegrees(hero) {
+  return isSwitchRotationMode() ? 120 : balance.heroes[hero.type].arcDegrees;
+}
+
+function rotateBySwitch(direction) {
+  if (!isSwitchRotationMode() || !state.running || state.paused || state.pausedForCards || state.gameOver) return;
+  state.rotationAngle += direction * TAU / 3;
+  state.rotationActive = true;
+  addEffect(center.x, center.y, "ring", "#d9c2ff", 78);
+  window.setTimeout(() => {
+    if (state) state.rotationActive = false;
+  }, 180);
 }
 
 async function saveBalance() {
@@ -610,7 +635,7 @@ function lerpAngle(from, to, t) {
 function enemiesForHero(hero) {
   const pos = heroPos(hero);
   const heroBalance = balance.heroes[hero.type];
-  const halfArc = (heroBalance.arcDegrees * Math.PI) / 360;
+  const halfArc = (activeArcDegrees(hero) * Math.PI) / 360;
   return state.enemies.filter(enemy => {
     if (enemy.delay > 0 || enemy.hp <= 0 || distance(enemy, pos) > heroBalance.range + enemy.radius) return false;
     const targetAngle = Math.atan2(enemy.y - pos.y, enemy.x - pos.x);
@@ -961,6 +986,8 @@ const debugSections = [
     title: "조작",
     rows: [
       ["회전 민감도", "rotationSensitivity"],
+      ["자유 회전 모드", "rotationFreeMode"],
+      ["120도 스위치 모드", "rotationSwitchMode"],
     ],
   },
   {
@@ -1108,6 +1135,10 @@ function buildDebugPanel() {
       }
       input.addEventListener("change", () => {
         setPath(balance, path, input.type === "checkbox" ? input.checked : Number(input.value));
+        if (input.type === "checkbox" && input.checked && path === "rotationFreeMode") balance.rotationSwitchMode = false;
+        if (input.type === "checkbox" && input.checked && path === "rotationSwitchMode") balance.rotationFreeMode = false;
+        if (input.type === "checkbox" && !balance.rotationFreeMode && !balance.rotationSwitchMode) balance.rotationFreeMode = true;
+        if (input.type === "checkbox" && (path === "rotationFreeMode" || path === "rotationSwitchMode")) buildDebugPanel();
         applyBalanceRuntime();
       });
       row.append(label, input);
@@ -1229,7 +1260,7 @@ function drawHeroRanges() {
     if (hero.hp <= 0) continue;
     const pos = heroPos(hero);
     const heroBalance = balance.heroes[hero.type];
-    const halfArc = (heroBalance.arcDegrees * Math.PI) / 360;
+    const halfArc = (activeArcDegrees(hero) * Math.PI) / 360;
     ctx.fillStyle = `${heroColors[hero.type]}24`;
     ctx.strokeStyle = `${heroColors[hero.type]}a8`;
     ctx.lineWidth = state.rotationActive ? 4 : 2;
@@ -1586,6 +1617,11 @@ function updateUi() {
   ui.coreLinkButton.dataset.ready = String(linkReady);
   ui.coreLinkButton.dataset.active = String(state.coreLink.active);
   ui.pauseButton.disabled = !state.started || state.gameOver || state.pausedForCards;
+  const switchMode = isSwitchRotationMode();
+  for (const button of [ui.rotateLeftButton, ui.rotateRightButton]) {
+    button.dataset.visible = String(switchMode);
+    button.disabled = !switchMode || !state.running || state.paused || state.pausedForCards || state.gameOver;
+  }
 }
 
 function setCharge(el, ratio, color) {
