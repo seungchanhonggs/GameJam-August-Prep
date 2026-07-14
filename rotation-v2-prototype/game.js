@@ -192,6 +192,7 @@ let upgrades;
 let lastTime = performance.now();
 let rotationDrag = null;
 let rotationHoldDirection = 0;
+let rotationTween = null;
 let nextEnemyId = 1;
 
 function resetGame() {
@@ -257,6 +258,8 @@ function resetGame() {
   ui.startButton.textContent = "전투 시작";
   ui.pauseButton.textContent = "일시정지";
   ui.pauseButton.dataset.paused = "false";
+  rotationTween = null;
+  rotationHoldDirection = 0;
   lastTime = performance.now();
   updateUi();
 }
@@ -434,6 +437,7 @@ function togglePause() {
   state.paused = !state.paused;
   rotationDrag = null;
   rotationHoldDirection = 0;
+  rotationTween = null;
   state.rotationActive = false;
   ui.pauseButton.textContent = state.paused ? "계속하기" : "일시정지";
   ui.pauseButton.dataset.paused = String(state.paused);
@@ -448,13 +452,15 @@ function activeArcDegrees(hero) {
 }
 
 function rotateBySwitch(direction) {
-  if (!isSwitchRotationMode() || !state.running || state.paused || state.pausedForCards || state.gameOver) return;
-  state.rotationAngle += direction * TAU / 3;
+  if (!isSwitchRotationMode() || !state.running || state.paused || state.pausedForCards || state.gameOver || rotationTween) return;
+  rotationTween = {
+    from: state.rotationAngle,
+    to: state.rotationAngle + direction * TAU / 3,
+    t: 0,
+    duration: 0.28,
+  };
   state.rotationActive = true;
   addEffect(center.x, center.y, "ring", "#d9c2ff", 78);
-  window.setTimeout(() => {
-    if (state) state.rotationActive = false;
-  }, 180);
 }
 
 async function saveBalance() {
@@ -502,6 +508,15 @@ function update(dt) {
   if (!state.running || state.paused || state.pausedForCards || state.gameOver) return;
 
   state.time += dt;
+  if (rotationTween) {
+    rotationTween.t = Math.min(1, rotationTween.t + dt / rotationTween.duration);
+    const eased = rotationTween.t * rotationTween.t * (3 - 2 * rotationTween.t);
+    state.rotationAngle = rotationTween.from + (rotationTween.to - rotationTween.from) * eased;
+    if (rotationTween.t >= 1) {
+      rotationTween = null;
+      state.rotationActive = false;
+    }
+  }
   if (rotationHoldDirection && !isSwitchRotationMode()) {
     state.rotationAngle += rotationHoldDirection * balance.rotationHoldSpeed * dt;
   }
