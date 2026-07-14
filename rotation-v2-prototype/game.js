@@ -31,8 +31,6 @@ const ui = {
   wallLevel: document.getElementById("wallLevel"),
   startButton: document.getElementById("startButton"),
   pauseButton: document.getElementById("pauseButton"),
-  rotateLeftButton: document.getElementById("rotateLeftButton"),
-  rotateRightButton: document.getElementById("rotateRightButton"),
   quickRestartButton: document.getElementById("quickRestartButton"),
   debugToggle: document.getElementById("debugToggle"),
   debugPanel: document.getElementById("debugPanel"),
@@ -361,6 +359,10 @@ function beginRotation(event) {
     activateCoreLink();
     return;
   }
+  if (isSwitchRotationMode()) {
+    rotateBySwitch(point.x < W / 2 ? -1 : 1);
+    return;
+  }
   if (radius > 390) return;
   rotationDrag = { pointerId: event.pointerId, lastAngle: pointerAngle(point) };
   state.rotationActive = true;
@@ -392,8 +394,6 @@ document.addEventListener("contextmenu", event => {
 });
 ui.startButton.addEventListener("click", startCombat);
 ui.pauseButton.addEventListener("click", togglePause);
-ui.rotateLeftButton.addEventListener("click", () => rotateBySwitch(-1));
-ui.rotateRightButton.addEventListener("click", () => rotateBySwitch(1));
 ui.quickRestartButton.addEventListener("click", () => {
   resetGame();
   startCombat();
@@ -1635,11 +1635,6 @@ function updateUi() {
   ui.coreLinkButton.dataset.ready = String(linkReady);
   ui.coreLinkButton.dataset.active = String(state.coreLink.active);
   ui.pauseButton.disabled = !state.started || state.gameOver || state.pausedForCards;
-  const switchMode = isSwitchRotationMode();
-  for (const button of [ui.rotateLeftButton, ui.rotateRightButton]) {
-    button.dataset.visible = String(switchMode);
-    button.disabled = !switchMode || !state.running || state.paused || state.pausedForCards || state.gameOver;
-  }
 }
 
 function setCharge(el, ratio, color) {
