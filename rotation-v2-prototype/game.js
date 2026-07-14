@@ -457,7 +457,7 @@ function rotateBySwitch(direction) {
     from: state.rotationAngle,
     to: state.rotationAngle + direction * TAU / 3,
     t: 0,
-    duration: 0.28,
+    duration: 0.38,
   };
   state.rotationActive = true;
   addEffect(center.x, center.y, "ring", "#d9c2ff", 78);
@@ -510,7 +510,8 @@ function update(dt) {
   state.time += dt;
   if (rotationTween) {
     rotationTween.t = Math.min(1, rotationTween.t + dt / rotationTween.duration);
-    const eased = rotationTween.t * rotationTween.t * (3 - 2 * rotationTween.t);
+    const remaining = 1 - rotationTween.t;
+    const eased = 1 - remaining * remaining * remaining;
     state.rotationAngle = rotationTween.from + (rotationTween.to - rotationTween.from) * eased;
     if (rotationTween.t >= 1) {
       rotationTween = null;
