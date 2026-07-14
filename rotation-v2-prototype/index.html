@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>CORELINE - Free Rotation Prototype</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="phone" aria-label="CORELINE free rotation prototype">
+      <div class="top-actions">
+        <button id="startButton" type="button">전투 시작</button>
+        <button id="pauseButton" type="button">일시정지</button>
+        <button id="quickRestartButton" type="button">재시작</button>
+        <button id="debugToggle" type="button">밸런스</button>
+      </div>
+
+      <div class="top-ui">
+        <div class="exp-label">CORE EXP</div>
+        <div class="exp-bar"><div id="coreExpFill"></div></div>
+      </div>
+
+      <div class="level-meter" aria-label="level progress">
+        <div class="boss-marker">BOSS</div>
+        <div class="meter-track"><div id="levelProgressFill"></div></div>
+        <div class="meter-label" id="levelLabel">Lv.1</div>
+      </div>
+
+      <canvas id="gameCanvas" width="720" height="1280" aria-label="game canvas"></canvas>
+      <button id="coreLinkButton" class="core-link-trigger" type="button" aria-label="코어 링크 발동"></button>
+
+      <div class="bottom-ui" id="heroPanel">
+        <div class="hero-card attack">
+          <div class="portrait">A</div>
+          <div class="hero-name">공격형</div>
+          <div class="hero-hp"><div id="attackHp"></div></div>
+          <div class="charge-ring"><div id="attackCharge"></div></div>
+          <div class="hero-level" id="attackLevel">Lv.1</div>
+        </div>
+        <div class="hero-card area">
+          <div class="portrait">G</div>
+          <div class="hero-name">광역형</div>
+          <div class="hero-hp"><div id="areaHp"></div></div>
+          <div class="charge-ring"><div id="areaCharge"></div></div>
+          <div class="hero-level" id="areaLevel">Lv.1</div>
+        </div>
+        <div class="hero-card wall">
+          <div class="portrait">W</div>
+          <div class="hero-name">방어형</div>
+          <div class="hero-hp"><div id="wallHp"></div></div>
+          <div class="charge-ring"><div id="wallCharge"></div></div>
+          <div class="hero-level" id="wallLevel">Lv.1</div>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="cardOverlay">
+        <div class="overlay-title">스킬 레벨업</div>
+        <div class="card-options" id="cardOptions"></div>
+      </div>
+
+      <div class="result hidden" id="resultOverlay">
+        <div class="result-panel">
+          <h1 id="resultTitle">Victory</h1>
+          <p id="resultText"></p>
+          <button id="restartButton" type="button">다시 시작</button>
+        </div>
+      </div>
+
+      <aside class="debug-panel hidden" id="debugPanel">
+        <div class="debug-head">
+          <strong>밸런스 조절</strong>
+          <div class="debug-actions">
+            <button id="saveBalanceButton" type="button">저장</button>
+            <button id="copyBalanceButton" type="button">복사</button>
+            <button id="debugClose" type="button">닫기</button>
+          </div>
+        </div>
+        <div class="debug-body" id="debugBody"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="balance_overrides.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
