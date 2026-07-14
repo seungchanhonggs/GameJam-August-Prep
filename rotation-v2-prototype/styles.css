@@ -122,15 +122,6 @@ body {
   background: #7de1ff;
 }
 
-.rotation-switch-button {
-  display: none;
-  background: #d9c2ff !important;
-}
-
-.rotation-switch-button[data-visible="true"] {
-  display: inline-block;
-}
-
 .top-actions button,
 .debug-head button {
   min-height: 30px;
