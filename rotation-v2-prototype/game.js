@@ -649,7 +649,9 @@ function enemiesForHero(hero) {
   const halfArc = (activeArcDegrees(hero) * Math.PI) / 360;
   return state.enemies.filter(enemy => {
     if (enemy.delay > 0 || enemy.hp <= 0 || distance(enemy, pos) > heroBalance.range + enemy.radius) return false;
-    const targetAngle = Math.atan2(enemy.y - pos.y, enemy.x - pos.x);
+    const targetAngle = isSwitchRotationMode()
+      ? Math.atan2(enemy.y - center.y, enemy.x - center.x)
+      : Math.atan2(enemy.y - pos.y, enemy.x - pos.x);
     return Math.abs(angleDelta(targetAngle, pos.angle)) <= halfArc;
   });
 }
@@ -1276,8 +1278,13 @@ function drawHeroRanges() {
     ctx.strokeStyle = `${heroColors[hero.type]}a8`;
     ctx.lineWidth = state.rotationActive ? 4 : 2;
     ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-    ctx.arc(pos.x, pos.y, heroBalance.range, pos.angle - halfArc, pos.angle + halfArc);
+    if (isSwitchRotationMode()) {
+      ctx.moveTo(center.x, center.y);
+      ctx.arc(center.x, center.y, heroBalance.range, pos.angle - halfArc, pos.angle + halfArc);
+    } else {
+      ctx.moveTo(pos.x, pos.y);
+      ctx.arc(pos.x, pos.y, heroBalance.range, pos.angle - halfArc, pos.angle + halfArc);
+    }
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
