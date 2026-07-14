@@ -73,6 +73,7 @@ const balance = {
   groupSpacing: 22,
   heroDamageShare: 0.6,
   rotationSensitivity: 0.65,
+  rotationHoldSpeed: 2.6,
   rotationFreeMode: true,
   rotationSwitchMode: false,
   coreLink: {
@@ -190,6 +191,7 @@ let state;
 let upgrades;
 let lastTime = performance.now();
 let rotationDrag = null;
+let rotationHoldDirection = 0;
 let nextEnemyId = 1;
 
 function resetGame() {
@@ -363,24 +365,20 @@ function beginRotation(event) {
     rotateBySwitch(point.x < W / 2 ? -1 : 1);
     return;
   }
-  if (radius > 390) return;
-  rotationDrag = { pointerId: event.pointerId, lastAngle: pointerAngle(point) };
+  rotationHoldDirection = point.x < W / 2 ? -1 : 1;
   state.rotationActive = true;
   try { canvas.setPointerCapture(event.pointerId); } catch {}
 }
 
 function moveRotation(event) {
-  if (!rotationDrag || event.pointerId !== rotationDrag.pointerId) return;
+  if (!rotationHoldDirection) return;
   event.preventDefault();
-  if (isSwitchRotationMode()) return;
-  const current = pointerAngle(canvasPoint(event));
-  state.rotationAngle += angleDelta(current, rotationDrag.lastAngle) * balance.rotationSensitivity;
-  rotationDrag.lastAngle = current;
 }
 
 function endRotation(event) {
-  if (!rotationDrag || event.pointerId !== rotationDrag.pointerId) return;
+  if (!rotationHoldDirection) return;
   event.preventDefault();
+  rotationHoldDirection = 0;
   rotationDrag = null;
   state.rotationActive = false;
 }
@@ -435,6 +433,7 @@ function togglePause() {
   if (!state.started || state.gameOver || state.pausedForCards) return;
   state.paused = !state.paused;
   rotationDrag = null;
+  rotationHoldDirection = 0;
   state.rotationActive = false;
   ui.pauseButton.textContent = state.paused ? "계속하기" : "일시정지";
   ui.pauseButton.dataset.paused = String(state.paused);
@@ -503,6 +502,9 @@ function update(dt) {
   if (!state.running || state.paused || state.pausedForCards || state.gameOver) return;
 
   state.time += dt;
+  if (rotationHoldDirection && !isSwitchRotationMode()) {
+    state.rotationAngle += rotationHoldDirection * balance.rotationHoldSpeed * dt;
+  }
   state.spawnTimer -= dt;
 
   if (state.spawnTimer <= 0) {
@@ -999,6 +1001,7 @@ const debugSections = [
     title: "조작",
     rows: [
       ["회전 민감도", "rotationSensitivity"],
+      ["꾹 누르기 회전 속도", "rotationHoldSpeed"],
       ["자유 회전 모드", "rotationFreeMode"],
       ["120도 스위치 모드", "rotationSwitchMode"],
     ],
