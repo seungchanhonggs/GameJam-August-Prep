@@ -134,9 +134,20 @@ function loadSavedBalance() {
     }
     const saved = localStorage.getItem("rotationDefenseV2.balance");
     if (saved && !hasCodeOverrides) deepMerge(balance, JSON.parse(saved));
+    normalizeRotationMode();
     migrateBalance();
   } catch (error) {
     console.warn("Failed to load saved balance", error);
+  }
+}
+
+function normalizeRotationMode() {
+  // Switch mode is authoritative so stale saved settings cannot leave the old
+  // hero-specific arcs active while the 120-degree controls are visible.
+  if (balance.rotationSwitchMode) {
+    balance.rotationFreeMode = false;
+  } else if (!balance.rotationFreeMode) {
+    balance.rotationFreeMode = true;
   }
 }
 
@@ -430,7 +441,7 @@ function togglePause() {
 }
 
 function isSwitchRotationMode() {
-  return balance.rotationSwitchMode && !balance.rotationFreeMode;
+  return Boolean(balance.rotationSwitchMode);
 }
 
 function activeArcDegrees(hero) {
