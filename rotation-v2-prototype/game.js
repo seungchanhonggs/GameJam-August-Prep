@@ -55,10 +55,16 @@ const arena = { rx: W * 0.43, ry: H * 0.22 };
 const slotAngles = [-Math.PI / 2, Math.PI / 6, (5 * Math.PI) / 6];
 
 const heroColors = {
-  attack: "#ffd457",
-  area: "#7de1ff",
-  wall: "#9cff82",
+  attack: "#ff5b57",
+  area: "#ffd84d",
+  wall: "#78e47a",
 };
+
+const signalStages = [
+  { role: "wall", color: "#78e47a", label: "방어" },
+  { role: "area", color: "#ffd84d", label: "광역" },
+  { role: "attack", color: "#ff5b57", label: "궁수" },
+];
 
 const balance = {
   coreHp: 120,
@@ -99,9 +105,22 @@ const balance = {
     group: { hp: 16, speed: 34, radius: 10, exp: 6, damage: 3, color: "#6ee7ff" },
     medium: { hp: 70, speed: 22, radius: 18, exp: 20, damage: 11, color: "#8f76ff" },
     rush: { hp: 42, speed: 62, radius: 14, exp: 16, damage: 14, color: "#ff6b4d" },
+    signal: {
+      hp: 260, speed: 17, radius: 27, exp: 42, damage: 16, color: "#4a3f62",
+      exposeRatio: 0.6,
+      blockedDamageMultiplier: 0.15,
+      wallDamageMultiplier: 1.35,
+      areaDamageMultiplier: 1.5,
+      attackDamageMultiplier: 4,
+      finisherDamage: 120,
+      wallStopDuration: 1.5,
+      burnDuration: 3,
+      burnDamagePerSecond: 8,
+    },
     boss: { hp: 1100, speed: 12, radius: 34, exp: 0, damage: 999, color: "#e34b68" },
   },
   waves: {
+    signalRepeatCount: 2,
     medium1Count: 1,
     group1Count: 7,
     rush1Count: 2,
@@ -419,6 +438,14 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     if (event.key.toLowerCase() === "m") {
       for (let direction = 0; direction < 3; direction += 1) spawnEnemy("medium", 0, direction * TAU / 3);
     }
+    if (event.key.toLowerCase() === "s") {
+      const signal = spawnEnemy("signal", 0, -Math.PI / 2);
+      signal.x = center.x;
+      signal.y = center.y - arena.ry * 0.9;
+      signal.hp = signal.maxHp * (balance.enemies.signal.exposeRatio + 0.02);
+    }
+    if (event.key.toLowerCase() === "q") debugRotate(-1);
+    if (event.key.toLowerCase() === "e") debugRotate(1);
   });
 }
 
@@ -463,6 +490,16 @@ function rotateBySwitch(direction) {
   addEffect(center.x, center.y, "ring", "#d9c2ff", 78);
 }
 
+function debugRotate(direction) {
+  if (!state.running || state.paused || state.pausedForCards || state.gameOver) return;
+  if (isSwitchRotationMode()) {
+    rotateBySwitch(direction);
+    return;
+  }
+  state.rotationAngle += direction * TAU / 3;
+  addEffect(center.x, center.y, "ring", "#d9c2ff", 78);
+}
+
 async function saveBalance() {
   localStorage.setItem("rotationDefenseV2.balance", JSON.stringify(balance, null, 2));
   try {
@@ -472,9 +509,9 @@ async function saveBalance() {
       body: JSON.stringify(balance),
     });
     if (!response.ok) throw new Error("save failed");
-    addEffect(center.x, center.y - 150, "text", "#7de1ff", "CODE SAVED");
+    addEffect(center.x, center.y - 150, "text", "#7de1ff", 30, "CODE SAVED");
   } catch {
-    addEffect(center.x, center.y - 150, "text", "#7de1ff", "BROWSER SAVED");
+    addEffect(center.x, center.y - 150, "text", "#7de1ff", 30, "BROWSER SAVED");
   }
 }
 
@@ -482,10 +519,10 @@ async function copyBalance() {
   const text = `const balance = ${JSON.stringify(balance, null, 2)};`;
   try {
     await navigator.clipboard.writeText(text);
-    addEffect(center.x, center.y - 150, "text", "#ffd457", "BALANCE COPIED");
+    addEffect(center.x, center.y - 150, "text", "#ffd457", 30, "BALANCE COPIED");
   } catch {
     console.log(text);
-    addEffect(center.x, center.y - 150, "text", "#ffd457", "SEE CONSOLE");
+    addEffect(center.x, center.y - 150, "text", "#ffd457", 30, "SEE CONSOLE");
   }
 }
 
@@ -552,12 +589,17 @@ function updateCoreLink(dt) {
 
 function spawnScriptedWaves() {
   const waves = [
-    { t: 20, type: "medium", count: balance.waves.medium1Count },
+    { t: 12, type: "signal", count: 1 },
+    { t: 28, type: "medium", count: balance.waves.medium1Count },
+    { t: 34, type: "signal", count: balance.waves.signalRepeatCount },
     { t: 38, type: "group", count: balance.waves.group1Count },
     { t: 55, type: "rush", count: balance.waves.rush1Count },
+    { t: 64, type: "signal", count: balance.waves.signalRepeatCount },
     { t: 76, type: "group", count: balance.waves.group2Count },
+    { t: 88, type: "signal", count: balance.waves.signalRepeatCount },
     { t: 95, type: "medium", count: balance.waves.medium2Count },
     { t: 112, type: "rush", count: balance.waves.rush2Count },
+    { t: 118, type: "signal", count: balance.waves.signalRepeatCount },
   ];
 
   while (state.waveIndex < waves.length && state.time >= waves[state.waveIndex].t) {
@@ -573,7 +615,7 @@ function spawnScriptedWaves() {
     const boss = spawnEnemy("boss", 0);
     state.boss = boss;
     state.bossSpawned = true;
-    addEffect(center.x, center.y - 120, "text", "#ff6b4d", "BOSS");
+    addEffect(center.x, center.y - 120, "text", "#ff6b4d", 34, "BOSS");
   }
 }
 
@@ -633,6 +675,13 @@ function spawnEnemyInstance(type, entryAngle, delay, offset) {
     hitFlash: 0,
     attackCooldown: 0,
     linkSlow: 0,
+    signalStage: type === "signal" ? -1 : null,
+    signalFreeze: 0,
+    signalBurn: 0,
+    signalFeedbackCooldown: 0,
+    signalGrace: 0,
+    signalLastRole: null,
+    signalCompletedRoles: [],
   };
   state.enemies.push(enemy);
   return enemy;
@@ -768,14 +817,14 @@ function fireProjectile(x, y, target, damage, speed, color, pierce, spread, owne
   });
 }
 
-function areaBlast(x, y, radius, damage, centerBonus) {
+function areaBlast(x, y, radius, damage, centerBonus, owner = "area") {
   addEffect(x, y, "blast", heroColors.area, radius);
   for (const enemy of state.enemies) {
     if (enemy.delay > 0) continue;
     const dist = distance(enemy, { x, y });
     if (dist <= radius + enemy.radius) {
       const centerMultiplier = dist < radius * 0.45 ? 1 + centerBonus : 1;
-      damageEnemy(enemy, damage * centerMultiplier);
+      damageEnemy(enemy, damage * centerMultiplier, owner);
     }
   }
 }
@@ -836,7 +885,7 @@ function updateProjectiles(dt) {
       if (enemy.delay > 0 || enemy.hp <= 0) continue;
       if (distance(p, enemy) < p.radius + enemy.radius) {
         if (p.owner === "area-skill") {
-          areaBlast(p.x, p.y, p.blastRadius, p.damage, p.centerBonus);
+          areaBlast(p.x, p.y, p.blastRadius, p.damage, p.centerBonus, "area");
           p.life = 0;
           break;
         }
@@ -862,14 +911,14 @@ function updateWalls(dt) {
           wall.linkChargeGranted = true;
           gainLinkCharge("wall", balance.coreLink.wallBlockCharge);
         }
-        damageEnemy(enemy, balance.heroes.wall.wallContactDamage * upgrades.wallContactDamage * dt * 4);
+        damageEnemy(enemy, balance.heroes.wall.wallContactDamage * upgrades.wallContactDamage * dt * 4, "wall");
         enemy.x += Math.cos(wall.angle) * 42 * dt;
         enemy.y += Math.sin(wall.angle) * 34 * dt;
         wall.hp -= enemy.type === "rush" ? 22 * dt : 9 * dt;
       }
     }
     if (wall.hp <= 0 && upgrades.wallExplode) {
-      areaBlast(wall.x, wall.y, 54, 36, 0);
+      areaBlast(wall.x, wall.y, 54, 36, 0, "wall");
     }
   }
   state.walls = state.walls.filter(w => w.hp > 0 && w.life > 0);
@@ -890,12 +939,19 @@ function updateEnemies(dt) {
     enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
     enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
     enemy.linkSlow = Math.max(0, (enemy.linkSlow || 0) - dt);
+    enemy.signalFreeze = Math.max(0, (enemy.signalFreeze || 0) - dt);
+    enemy.signalFeedbackCooldown = Math.max(0, (enemy.signalFeedbackCooldown || 0) - dt);
+    enemy.signalGrace = Math.max(0, (enemy.signalGrace || 0) - dt);
+    if (enemy.signalBurn > 0) {
+      enemy.signalBurn = Math.max(0, enemy.signalBurn - dt);
+      enemy.hp = Math.max(1, enemy.hp - balance.enemies.signal.burnDamagePerSecond * dt);
+    }
     if (enemy.delay > 0) continue;
     const blockingHero = blockingHeroForEnemy(enemy);
     const target = blockingHero || { type: "core", x: center.x, y: center.y, radius: 34 };
     const angle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
     const rushBoost = enemy.type === "rush" && distance(enemy, center) < 260 ? 1.35 : 1;
-    const speedBoost = rushBoost * (enemy.linkSlow > 0 ? 0.45 : 1);
+    const speedBoost = rushBoost * (enemy.linkSlow > 0 ? 0.45 : 1) * (enemy.signalFreeze > 0 ? 0 : 1);
     if (!blockingHero) {
       enemy.x += Math.cos(angle) * enemy.speed * speedBoost * dt;
       enemy.y += Math.sin(angle) * enemy.speed * speedBoost * dt;
@@ -938,10 +994,73 @@ function updateEnemies(dt) {
   state.enemies = state.enemies.filter(enemy => enemy.hp > 0);
 }
 
-function damageEnemy(enemy, amount) {
+function roleFromOwner(owner) {
+  if (owner === "wall" || owner?.startsWith("wall")) return "wall";
+  if (owner === "area" || owner?.startsWith("area")) return "area";
+  if (owner === "attack" || owner?.startsWith("attack")) return "attack";
+  return null;
+}
+
+function damageEnemy(enemy, amount, owner = null) {
+  if (enemy.type === "signal" && enemy.signalStage >= 0 && enemy.signalStage < signalStages.length) {
+    const role = roleFromOwner(owner);
+    const expected = signalStages[enemy.signalStage].role;
+    if (role && role !== expected) {
+      amount *= balance.enemies.signal.blockedDamageMultiplier;
+      const isPreviousRoleFollowThrough = role === enemy.signalLastRole && enemy.signalGrace > 0;
+      const isCompletedRoleFollowThrough = enemy.signalCompletedRoles.includes(role);
+      if (!isPreviousRoleFollowThrough && !isCompletedRoleFollowThrough && enemy.signalFeedbackCooldown <= 0) {
+        addEffect(enemy.x, enemy.y - enemy.radius - 66, "text", "#d9d9e3", 24, "BLOCKED");
+        enemy.signalFeedbackCooldown = 1.05;
+      }
+    } else if (role === expected) {
+      if (role === "wall") {
+        amount *= balance.enemies.signal.wallDamageMultiplier;
+        enemy.signalFreeze = balance.enemies.signal.wallStopDuration;
+        enemy.signalStage = 1;
+        enemy.signalGrace = 0.8;
+        enemy.signalLastRole = role;
+        enemy.signalCompletedRoles.push(role);
+        addEffect(enemy.x, enemy.y, "ring", signalStages[0].color, 45);
+        addEffect(enemy.x, enemy.y - enemy.radius - 66, "text", signalStages[0].color, 25, "WEAK");
+      } else if (role === "area") {
+        amount *= balance.enemies.signal.areaDamageMultiplier;
+        enemy.signalBurn = balance.enemies.signal.burnDuration;
+        enemy.signalStage = 2;
+        enemy.signalGrace = 0.8;
+        enemy.signalLastRole = role;
+        enemy.signalCompletedRoles.push(role);
+        addEffect(enemy.x, enemy.y, "blast", signalStages[1].color, 52);
+        addEffect(enemy.x, enemy.y - enemy.radius - 66, "text", signalStages[1].color, 25, "WEAK");
+      } else if (role === "attack") {
+        amount = amount * balance.enemies.signal.attackDamageMultiplier + balance.enemies.signal.finisherDamage;
+        enemy.signalStage = 3;
+        enemy.signalCompletedRoles.push(role);
+        addEffect(enemy.x, enemy.y, "blast", signalStages[2].color, 82);
+        addEffect(enemy.x, enemy.y - enemy.radius - 78, "text", "#ffffff", 34, "CRITICAL!");
+        addEffect(center.x, center.y - 150, "text", "#fff4a8", 38, "3 HERO COMBO!");
+      }
+    }
+  }
+
   enemy.hp -= amount;
   enemy.hitFlash = 0.08;
   addEffect(enemy.x, enemy.y, "spark", "#ffffff");
+
+  if (
+    enemy.type === "signal"
+    && enemy.signalStage === -1
+    && enemy.hp > 0
+    && enemy.hp / enemy.maxHp <= balance.enemies.signal.exposeRatio
+  ) {
+    enemy.signalStage = 0;
+    enemy.signalFreeze = 0.35;
+    enemy.signalFeedbackCooldown = 0.65;
+    enemy.signalGrace = 0.8;
+    enemy.signalLastRole = roleFromOwner(owner);
+    addEffect(enemy.x, enemy.y, "ring", signalStages[0].color, 54);
+    addEffect(enemy.x, enemy.y - enemy.radius - 72, "text", signalStages[0].color, 28, "SIGNAL OPEN");
+  }
 }
 
 function spawnExp(x, y, amount) {
@@ -967,13 +1086,13 @@ function triggerLevelUp() {
   state.expNeed = Math.round(state.expNeed * balance.coreExpGrowth);
   state.level += 1;
   if (!balance.levelUps.enabled) {
-    addEffect(center.x, center.y, "text", "#ffffff", "CORE LV UP");
+    addEffect(center.x, center.y, "text", "#ffffff", 32, "CORE LV UP");
     updateUi();
     return;
   }
   const cards = randomCards(3);
   if (!cards.length) {
-    addEffect(center.x, center.y, "text", "#ffffff", "CORE LV UP");
+    addEffect(center.x, center.y, "text", "#ffffff", 32, "CORE LV UP");
     updateUi();
     return;
   }
@@ -990,7 +1109,7 @@ function triggerLevelUp() {
       hero.level += 1;
       state.pausedForCards = false;
       ui.cardOverlay.classList.add("hidden");
-      addEffect(center.x, center.y, "text", heroColors[card.role], "LEVEL UP");
+      addEffect(center.x, center.y, "text", heroColors[card.role], 32, "LEVEL UP");
       updateUi();
     });
     ui.cardOptions.appendChild(button);
@@ -1111,6 +1230,23 @@ const debugSections = [
     ],
   },
   {
+    title: "적 - 신호 갑각수",
+    rows: [
+      ["체력", "enemies.signal.hp"],
+      ["공격 피해", "enemies.signal.damage"],
+      ["이동 속도", "enemies.signal.speed"],
+      ["신호 노출 체력 비율", "enemies.signal.exposeRatio"],
+      ["오답 피해 배율", "enemies.signal.blockedDamageMultiplier"],
+      ["방어형 정답 피해 배율", "enemies.signal.wallDamageMultiplier"],
+      ["광역형 정답 피해 배율", "enemies.signal.areaDamageMultiplier"],
+      ["궁수형 치명타 배율", "enemies.signal.attackDamageMultiplier"],
+      ["궁수형 마무리 추가 피해", "enemies.signal.finisherDamage"],
+      ["방어형 정지 시간(초)", "enemies.signal.wallStopDuration"],
+      ["점화 유지 시간(초)", "enemies.signal.burnDuration"],
+      ["점화 초당 피해", "enemies.signal.burnDamagePerSecond"],
+    ],
+  },
+  {
     title: "웨이브 / 적 생성",
     rows: [
       ["최소 생성 간격(초)", "ambientMinInterval"],
@@ -1119,6 +1255,7 @@ const debugSections = [
       ["생성 위치 퍼짐", "spawnJitter"],
       ["군집 한 무리 수", "groupPackSize"],
       ["군집 적 사이 간격", "groupSpacing"],
+      ["반복 신호갑주 수", "waves.signalRepeatCount"],
       ["1차 중형 수", "waves.medium1Count"],
       ["1차 군집 수", "waves.group1Count"],
       ["1차 돌진 수", "waves.rush1Count"],
@@ -1430,6 +1567,11 @@ function drawHeroes() {
     ctx.save();
     ctx.translate(pos.x, pos.y);
     ctx.globalAlpha = hero.hp > 0 ? 1 : 0.3;
+    ctx.strokeStyle = heroColors[hero.type];
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(0, 0, 32, 0, TAU);
+    ctx.stroke();
     if (heroSpriteSheet.complete && heroSpriteSheet.naturalWidth > 0) {
       const sourceIndex = hero.type === "attack" ? 0 : hero.type === "area" ? 1 : 2;
       const sourceWidth = heroSpriteSheet.naturalWidth / 3;
@@ -1481,7 +1623,124 @@ function drawEnemies() {
       ctx.fillStyle = "#ff4f61";
       ctx.fillRect(-42, -52, 84 * ratio, 10);
     }
+    if (enemy.type === "signal") {
+      drawSignalShell(enemy);
+      drawSignalEnemyUi(enemy);
+    }
     ctx.restore();
+  }
+}
+
+function drawSignalShell(enemy) {
+  ctx.strokeStyle = "#a18bbb";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, enemy.radius * 0.68, -2.55, -0.6);
+  ctx.arc(0, 0, enemy.radius * 0.68, 0.6, 2.55);
+  ctx.stroke();
+
+  ctx.fillStyle = "#302941";
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * (enemy.radius - 3), -8);
+    ctx.lineTo(side * (enemy.radius + 12), -15);
+    ctx.lineTo(side * (enemy.radius + 7), -2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(side * (enemy.radius - 3), 8);
+    ctx.lineTo(side * (enemy.radius + 12), 15);
+    ctx.lineTo(side * (enemy.radius + 7), 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (enemy.signalStage < 0) {
+    ctx.strokeStyle = "#211b2e";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, -enemy.radius + 5);
+    ctx.lineTo(0, enemy.radius - 5);
+    ctx.stroke();
+    return;
+  }
+
+  signalStages.forEach((stage, index) => {
+    const active = index === enemy.signalStage;
+    ctx.fillStyle = active ? stage.color : `${stage.color}88`;
+    ctx.strokeStyle = "#1a1720";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc((index - 1) * 10, 0, active ? 6 : 5, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+  });
+}
+
+function drawSignalEnemyUi(enemy) {
+  const hpRatio = Math.max(0, enemy.hp / enemy.maxHp);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.68)";
+  roundRect(-45, -enemy.radius - 55, 90, 10, 5);
+  ctx.fill();
+  ctx.fillStyle = "#f2f0ff";
+  roundRect(-45, -enemy.radius - 55, 90 * hpRatio, 10, 5);
+  ctx.fill();
+
+  if (enemy.signalStage < 0) return;
+  for (let index = 0; index < signalStages.length; index += 1) {
+    const stage = signalStages[index];
+    const x = (index - 1) * 30;
+    const active = index === enemy.signalStage;
+    const completed = index < enemy.signalStage;
+    const pulse = active ? 1 + Math.sin(state.time * 10) * 0.13 : 1;
+    ctx.save();
+    ctx.translate(x, -enemy.radius - 28);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = active ? stage.color : completed ? `${stage.color}88` : "rgba(16, 17, 24, 0.82)";
+    ctx.strokeStyle = active ? "#ffffff" : "#181820";
+    ctx.lineWidth = active ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 13, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    drawSignalIcon(index, active ? "#17151c" : stage.color);
+    ctx.restore();
+  }
+}
+
+function drawSignalIcon(index, color) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  if (index === 0) {
+    ctx.beginPath();
+    ctx.moveTo(0, -5);
+    ctx.lineTo(5, -3);
+    ctx.lineTo(4, 3);
+    ctx.lineTo(0, 6);
+    ctx.lineTo(-4, 3);
+    ctx.lineTo(-5, -3);
+    ctx.closePath();
+    ctx.stroke();
+  } else if (index === 1) {
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.quadraticCurveTo(7, 0, 2, 6);
+    ctx.quadraticCurveTo(-6, 4, -2, -1);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, TAU);
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(-3, 0);
+    ctx.moveTo(3, 0);
+    ctx.lineTo(7, 0);
+    ctx.moveTo(0, -7);
+    ctx.lineTo(0, -3);
+    ctx.moveTo(0, 3);
+    ctx.lineTo(0, 7);
+    ctx.stroke();
   }
 }
 
@@ -1541,7 +1800,7 @@ function drawStartPrompt() {
   ctx.fillStyle = "#ffffff";
   ctx.font = "950 21px system-ui";
   ctx.textAlign = "center";
-  ctx.fillText("전투 시작 후 원을 따라 드래그", center.x, center.y - 94);
+  ctx.fillText("전투 시작 후 화면 좌우를 눌러 회전", center.x, center.y - 94);
   ctx.restore();
 }
 
@@ -1619,7 +1878,8 @@ function drawEffects() {
       ctx.lineTo(e.x, e.y);
       ctx.stroke();
     } else if (e.type === "text") {
-      ctx.font = "950 42px system-ui";
+      const fontSize = Number.isFinite(e.size) ? e.size : 32;
+      ctx.font = `950 ${fontSize}px system-ui`;
       ctx.textAlign = "center";
       ctx.fillText(e.text, e.x, e.y - p * 40);
     }
