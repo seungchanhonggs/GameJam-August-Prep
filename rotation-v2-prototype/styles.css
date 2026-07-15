@@ -6,9 +6,9 @@
   --muted: rgba(255, 255, 255, 0.72);
   --line: rgba(255, 255, 255, 0.24);
   --panel: rgba(9, 17, 29, 0.76);
-  --attack: #ffd457;
-  --area: #7de1ff;
-  --wall: #9cff82;
+  --attack: #ff5b57;
+  --area: #ffd84d;
+  --wall: #78e47a;
 }
 
 * {
